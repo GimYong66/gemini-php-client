@@ -6,6 +6,7 @@ namespace Gemini\Responses\GenerativeModel;
 
 use Gemini\Contracts\ResponseContract;
 use Gemini\Data\Candidate;
+use Gemini\Data\FunctionCall;
 use Gemini\Data\Part;
 use Gemini\Data\PromptFeedback;
 use Gemini\Data\UsageMetadata;
@@ -85,6 +86,31 @@ final class GenerateContentResponse implements ResponseContract
         }
 
         return $parts[0]->text;
+    }
+
+    public function functionCall(): FunctionCall
+    {
+        $parts = $this->parts();
+
+        if (empty($parts)) {
+            throw new ValueError(
+                message: 'The `GenerateContentResponse::functionCall()` quick accessor only works when the response contains a valid '.
+                '`Part`, but none was returned. Check the `candidate.safety_ratings` to see if the '.
+                'response was blocked.'
+            );
+        }
+
+        if (count($parts) !== 1 || $parts[0]->functionCall === null) {
+            throw new ValueError(
+                'The `GenerateContentResponse::functionCall()` quick accessor only works for '.
+                'simple (single-`Part`) functionCall responses. This response does not contain a valid functionCall.'.
+                'Use the `GenerateContentResponse::parts()` accessor or the full '.
+                '`GenerateContentResponse::$candidates[index].content.parts` lookup '.
+                'to access the functionCall details instead.'
+            );
+        }
+
+        return $parts[0]->functionCall;
     }
 
     /**
